@@ -20,16 +20,18 @@ public class HomeController : Controller
         _privacyDataService = privacyDataService ?? throw new ArgumentNullException(nameof(privacyDataService));
     }
 
-    public ActionResult Index()
+    public IActionResult Index()
     {
         return View();
     }
 
-    public ActionResult Privacy()
+    public async Task<IActionResult> Privacy()
     {
-        ViewBag.Message = _privacyDataService.GetPrivacyDataAsync().Result;
+        // Await the asynchronous method properly
+        ViewBag.Message = await _privacyDataService.GetPrivacyDataAsync().ConfigureAwait(false);
         return View();
     }
+
 
     public async Task<IActionResult> Help()
     {
@@ -40,6 +42,6 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel {RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier});
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

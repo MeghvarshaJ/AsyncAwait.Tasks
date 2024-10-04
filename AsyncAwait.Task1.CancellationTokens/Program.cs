@@ -8,11 +8,16 @@
 */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AsyncAwait.Task1.CancellationTokens;
 
 internal class Program
 {
+
+    private static CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
     /// <summary>
     /// The Main method should not be changed at all.
     /// </summary>
@@ -31,7 +36,14 @@ internal class Program
         {
             if (int.TryParse(input, out var n))
             {
-                CalculateSum(n);
+                //CalculateSum(n);
+
+                // Cancel the previous calculation if it's running
+                cancellationTokenSource.Cancel();
+                cancellationTokenSource = new CancellationTokenSource();
+
+                // Start a new asynchronous calculation
+                _ = CalculateSumAsync(n, cancellationTokenSource.Token);
             }
             else
             {
@@ -46,16 +58,28 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void CalculateSum(int n)
+    private static async Task CalculateSumAsync(int n, CancellationToken token)
     {
         // todo: make calculation asynchronous
-        var sum = Calculator.Calculate(n);
-        Console.WriteLine($"Sum for {n} = {sum}.");
-        Console.WriteLine();
-        Console.WriteLine("Enter N: ");
-        // todo: add code to process cancellation and uncomment this line    
-        // Console.WriteLine($"Sum for {n} cancelled...");
 
         Console.WriteLine($"The task for {n} started... Enter N to cancel the request:");
+
+        try
+        {
+            var sum = await Task.Run(() => Calculator.Calculate(n, token), token);
+            Console.WriteLine($"Sum for {n} = {sum}.");
+        }
+        catch (OperationCanceledException)
+        {
+            // todo: add code to process cancellation and uncomment this line
+            Console.WriteLine($"Sum for {n} cancelled...");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Enter N: ");
     }
 }

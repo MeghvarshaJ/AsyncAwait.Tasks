@@ -17,26 +17,22 @@ public class StatisticMiddleware
     {
         _next = next;
         _statisticService = statisticService ?? throw new ArgumentNullException(nameof(statisticService));
-    }
+    }   
 
     public async Task InvokeAsync(HttpContext context)
     {
         string path = context.Request.Path;
 
-        var staticRegTask = Task.Run(
-            () => _statisticService.RegisterVisitAsync(path)
-                .ConfigureAwait(false)
-                .GetAwaiter().OnCompleted(UpdateHeaders));
-        Console.WriteLine(staticRegTask.Status); // just for debugging purposes
+        // Await the registration of the visit
+        await _statisticService.RegisterVisitAsync(path).ConfigureAwait(false);
 
-        void UpdateHeaders()
-        {
-            context.Response.Headers.Add(
-                CustomHttpHeaders.TotalPageVisits,
-                _statisticService.GetVisitsCountAsync(path).GetAwaiter().GetResult().ToString());
-        }
+        // Update headers after the visit is registered
+        var visitCount = await _statisticService.GetVisitsCountAsync(path).ConfigureAwait(false);
+        context.Response.Headers.Add(
+            CustomHttpHeaders.TotalPageVisits,
+            visitCount.ToString());
 
-        Thread.Sleep(3000); // without this the statistic counter does not work
+        // Proceed to the next middleware/component in the pipeline
         await _next(context);
     }
 }

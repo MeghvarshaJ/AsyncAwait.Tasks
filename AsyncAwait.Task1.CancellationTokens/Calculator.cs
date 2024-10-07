@@ -12,9 +12,13 @@ internal static class Calculator
 
         for (var i = 0; i < n; i++)
         {
-            token.ThrowIfCancellationRequested(); // Check for cancellation
+            //token.ThrowIfCancellationRequested(); // Check for cancellation
+            if (token.IsCancellationRequested)
+            {                
+                return 0;
+            }
             // i + 1 is to allow 2147483647 (Max(Int32)) 
-            sum = sum + (i + 1);
+            sum += (i + 1);
             Thread.Sleep(10); // Simulate work
         }
 
